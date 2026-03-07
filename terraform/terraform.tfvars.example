@@ -1,0 +1,6 @@
+aws_region    = "us-east-1"
+project_name  = "ha-app"
+my_ip         = "YOUR_IP/32"
+key_pair_name = "ha-app-key"
+domain_name   = "yourapp.com"
+alert_email   = "you@email.com"
