@@ -32,3 +32,28 @@ module "networking" {
   project_name = var.project_name
   azs          = var.azs
 }
+
+module "security" {
+  source       = "./modules/security"
+  vpc_id       = module.networking.vpc_id
+  project_name = var.project_name
+  my_ip        = var.my_ip
+}
+
+module "compute" {
+  source                    = "./modules/compute"
+  project_name              = var.project_name
+  aws_region                = var.aws_region
+  vpc_id                    = module.networking.vpc_id
+  public_subnet_ids         = module.networking.public_subnet_ids
+  private_subnet_ids        = module.networking.private_subnet_ids
+  alb_sg_id                 = module.security.alb_sg_id
+  ec2_sg_id                 = module.security.ec2_sg_id
+  bastion_sg_id             = module.security.bastion_sg_id
+  ec2_instance_profile_name = module.security.ec2_instance_profile_name
+  key_pair_name             = var.key_pair_name
+  db_secret_name            = var.db_secret_name
+  # ecr_repo_url and db_host will be added later
+  ecr_repo_url              = ""
+  db_host                   = ""
+}
