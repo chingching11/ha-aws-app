@@ -57,3 +57,11 @@ module "compute" {
   ecr_repo_url              = ""
   db_host                   = ""
 }
+
+module "database" {
+  source              = "./modules/database"
+  project_name        = var.project_name
+  database_subnet_ids = module.networking.database_subnet_ids
+  rds_sg_id           = module.security.rds_sg_id
+  db_secret_name      = var.db_secret_name
+}

@@ -3,6 +3,8 @@ resource "aws_launch_template" "app" {
   image_id      = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
 
+  key_name = var.key_pair_name
+  
   iam_instance_profile {
     name = var.ec2_instance_profile_name
   }

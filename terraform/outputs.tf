@@ -29,3 +29,11 @@ output "bastion_public_ip" {
   description = "Bastion host IP for SSH access"
   value       = module.compute.bastion_public_ip
 }
+
+output "db_endpoint" {
+  value = module.database.db_endpoint
+}
+
+output "db_host" {
+  value = module.database.db_host
+}
