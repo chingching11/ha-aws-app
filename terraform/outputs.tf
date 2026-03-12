@@ -37,3 +37,11 @@ output "db_endpoint" {
 output "db_host" {
   value = module.database.db_host
 }
+
+output "ecr_repo_url" { 
+  value = module.compute.ecr_repo_url 
+}
+
+output "target_group_arn" {
+  value = module.compute.target_group_arn
+}

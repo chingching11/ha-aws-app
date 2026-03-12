@@ -4,7 +4,7 @@ resource "aws_launch_template" "app" {
   instance_type = "t3.micro"
 
   key_name = var.key_pair_name
-  
+
   iam_instance_profile {
     name = var.ec2_instance_profile_name
   }
@@ -37,7 +37,7 @@ resource "aws_autoscaling_group" "app" {
   min_size            = 2
   max_size            = 4
   vpc_zone_identifier = var.private_subnet_ids
-  target_group_arns   = [var.target_group_arn]
+  target_group_arns   = [aws_lb_target_group.main.arn]
 
   launch_template {
     id      = aws_launch_template.app.id

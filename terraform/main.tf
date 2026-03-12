@@ -53,9 +53,8 @@ module "compute" {
   ec2_instance_profile_name = module.security.ec2_instance_profile_name
   key_pair_name             = var.key_pair_name
   db_secret_name            = var.db_secret_name
-  # ecr_repo_url and db_host will be added later
-  ecr_repo_url              = ""
-  db_host                   = ""
+  ecr_repo_url              = module.compute.ecr_repo_url
+  db_host                   = module.database.db_host
 }
 
 module "database" {
