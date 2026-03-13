@@ -45,3 +45,7 @@ output "ecr_repo_url" {
 output "target_group_arn" {
   value = module.compute.target_group_arn
 }
+
+output "github_actions_role_arn" {
+  value = module.security.github_actions_role_arn
+}
