@@ -1,0 +1,86 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    name: Build, Push, Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume:    ${{ secrets.AWS_ROLE_ARN }}
+          aws-region:        ${{ secrets.AWS_REGION }}
+          role-session-name: GitHubActions
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push
+        env:
+          ECR_REGISTRY:   ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG:      ${{ github.sha }}
+        run: |
+          cd app
+          docker build \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "Pushed image: $IMAGE_TAG"
+
+      - name: Deploy to ASG
+        run: |
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name ${{ secrets.ASG_NAME }} \
+            --preferences '{
+              "MinHealthyPercentage": 50,
+              "InstanceWarmup": 60
+            }' \
+            --region ${{ secrets.AWS_REGION }}
+          echo "Rolling deployment started"
+
+      - name: Health check gate
+        run: |
+          echo "Waiting 3 minutes for new instances..."
+          sleep 180
+
+          ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --names ${{ secrets.ALB_NAME }} \
+            --query 'LoadBalancers[0].DNSName' \
+            --output text \
+            --region ${{ secrets.AWS_REGION }})
+
+          echo "Checking: http://$ALB_DNS/health"
+
+          for i in {1..5}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              http://$ALB_DNS/health)
+            echo "Attempt $i: HTTP $HTTP_STATUS"
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Deployment successful"
+              exit 0
+            fi
+            sleep 30
+          done
+
+          echo "Deployment failed — health check did not return 200"
+          exit 1
