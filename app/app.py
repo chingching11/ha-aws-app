@@ -58,7 +58,7 @@ def health():
     except Exception as e:
         return jsonify({"status": "unhealthy", "error": str(e)}), 500
 
-;
+
 @app.route("/tasks", methods=["GET"])
 def get_tasks():
     tasks = Task.query.order_by(Task.created_at.desc()).all()
