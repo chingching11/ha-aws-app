@@ -61,3 +61,54 @@ resource "aws_autoscaling_group" "app" {
   }
 }
 
+# Scale Out 
+# Add one EC2 when average CPU stays above 70% for 2 periods
+resource "aws_autoscaling_policy" "scale_out" {
+  name                   = "${var.project_name}-scale-out"
+  autoscaling_group_name = aws_autoscaling_group.app.name
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = 1
+  cooldown               = 300
+}
+
+resource "aws_cloudwatch_metric_alarm" "scale_out_trigger" {
+  alarm_name          = "${var.project_name}-scale-out-trigger"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 120
+  statistic           = "Average"
+  threshold           = 70
+  alarm_actions       = [aws_autoscaling_policy.scale_out.arn]
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.app.name
+  }
+}
+
+# Scale In
+# Remove one EC2 when average CPU stays below 30% for 3 periods
+resource "aws_autoscaling_policy" "scale_in" {
+  name                   = "${var.project_name}-scale-in"
+  autoscaling_group_name = aws_autoscaling_group.app.name
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = -1
+  cooldown               = 300
+}
+
+resource "aws_cloudwatch_metric_alarm" "scale_in_trigger" {
+  alarm_name          = "${var.project_name}-scale-in-trigger"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 3
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 120
+  statistic           = "Average"
+  threshold           = 30
+  alarm_actions       = [aws_autoscaling_policy.scale_in.arn]
+
+  dimensions = {
+    AutoScalingGroupName = aws_autoscaling_group.app.name
+  }
+}

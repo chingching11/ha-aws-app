@@ -70,3 +70,18 @@ variable "db_host" {
   type        = string
   default     = ""
 }
+
+variable "alert_email" {
+  description = "Email for CloudWatch alarm notifications"
+  type        = string
+}
+
+variable "db_instance_identifier" {
+  description = "RDS instance identifier for CloudWatch metrics"
+  type        = string
+}
+
+variable "alb_arn_suffix" {
+  description = "ALB ARN suffix for CloudWatch metrics"
+  type        = string
+}

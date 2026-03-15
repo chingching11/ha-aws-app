@@ -55,6 +55,9 @@ module "compute" {
   db_secret_name            = var.db_secret_name
   ecr_repo_url              = module.compute.ecr_repo_url
   db_host                   = module.database.db_host
+  alert_email               = var.alert_email
+  db_instance_identifier    = module.database.db_instance_identifier
+  alb_arn_suffix            = module.compute.alb_arn_suffix
 }
 
 module "database" {
