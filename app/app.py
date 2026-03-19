@@ -1,6 +1,7 @@
 import os
 import json
 import boto3
+import requests
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 
@@ -48,6 +49,53 @@ class Task(db.Model):
 
 
 # ─── Routes ──────────────────────────────────────────────────
+# index route returns EC2 instance id and az
+@app.route("/")
+def index():
+    try:
+        # Get instance metadata from AWS
+        # It returns info about the instance itself
+        # only accessible from inside EC2
+        token_response = requests.put(
+            "http://169.254.169.254/latest/api/token",
+            headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
+            timeout=2,
+        )
+        token = token_response.text
+
+        # Get instance ID
+        instance_id = requests.get(
+            "http://169.254.169.254/latest/meta-data/instance-id",
+            headers={"X-aws-ec2-metadata-token": token},
+            timeout=2,
+        ).text
+
+        # Get availability zone
+        az = requests.get(
+            "http://169.254.169.254/latest/meta-data/placement/availability-zone",
+            headers={"X-aws-ec2-metadata-token": token},
+            timeout=2,
+        ).text
+
+        return (
+            jsonify(
+                {
+                    "message": "Hello from ha-aws-app!",
+                    "instance_id": instance_id,
+                    "az": az,
+                    "status": "healthy",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        return (
+            jsonify({"message": "Could not fetch instance metadata", "error": str(e)}),
+            200,
+        )
+
+
 @app.route("/health")
 def health():
     # ALB calls this every 30 seconds
