@@ -4,6 +4,14 @@ resource "aws_launch_template" "app" {
   instance_type = "t3.micro"
 
   key_name = var.key_pair_name
+  
+  # Increase hop limit from 1 to 2
+  # Required for Docker containers to access IMDS
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+  }
 
   iam_instance_profile {
     name = var.ec2_instance_profile_name
